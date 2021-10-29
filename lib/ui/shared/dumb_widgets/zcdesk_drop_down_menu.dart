@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:zc_desktop_flutter/constants/asset_paths.dart';
+import 'package:zc_desktop_flutter/constants/app_asset_paths.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_ui_helpers.dart';
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/zcdesk_text.dart';
 
@@ -66,7 +66,7 @@ class ZcdeskReusableDropDownMenu extends StatelessWidget {
                 child: Container(
                   height: 12,
                   width: 12,
-                  child: SvgPicture.asset("assets/icons/add_drop_down.svg"),
+                  child: SvgPicture.asset('assets/icons/add_drop_down.svg'),
                 ),
               ),
             ],

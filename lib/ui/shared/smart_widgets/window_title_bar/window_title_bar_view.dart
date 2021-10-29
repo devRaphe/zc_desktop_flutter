@@ -7,11 +7,14 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stacked/stacked.dart';
-import 'package:zc_desktop_flutter/constants/asset_paths.dart';
+import 'package:zc_desktop_flutter/constants/app_asset_paths.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_app_colors.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_text_styles.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_ui_helpers.dart';
+import 'package:zc_desktop_flutter/ui/shared/smart_widgets/profile/profile_drop/profile_drop_view.dart';
+import 'package:zc_desktop_flutter/ui/shared/smart_widgets/search_modal/search_modal_view.dart';
 import 'package:zc_desktop_flutter/ui/shared/smart_widgets/window_title_bar/window_title_bar_viewmodel.dart';
+import 'package:zc_desktop_flutter/ui/views/main/status_dialog/status_dialog_min/status_dialog_min_view.dart';
 
 class WindowTitleBar extends StatelessWidget {
   final Widget body;
@@ -33,15 +36,14 @@ class WindowTitleBar extends StatelessWidget {
             child: Column(
               children: [
                 Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 15.w, vertical: 8.w),
+                  padding: EdgeInsets.symmetric(vertical: 10.w, horizontal: 15.h),
                   child: WindowTitleBarBox(
                     child: Row(
                       children: [
                         if (Platform.isMacOS || Platform.isLinux) RightSide(),
                         model.isHomeView
                             ? Expanded(child: LeftSideHome(model: model))
-                            : Expanded(child: LeftSideAuth()),
+                            : Expanded(child: LeftSideAuth(model: model)),
                         if (Platform.isWindows) RightSide()
                       ],
                     ),
@@ -92,15 +94,21 @@ class RightSide extends StatelessWidget {
 }
 
 class LeftSideAuth extends StatelessWidget {
-  const LeftSideAuth({Key? key}) : super(key: key);
-
+  const LeftSideAuth({Key? key, required this.model}) : super(key: key);
+  final WindowTitleBarModel model;
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.menu, color: lightIconColor),
+        Container(
+            padding: EdgeInsets.symmetric(horizontal: 50.0),
+            child: Icon(
+              Icons.menu,
+              color: lightIconColor,
+              size: 20,
+            )),
         horizontalSpaceMedium,
-        Text('Sign in | Zuri',
+        Text(model.title,
             style: preferenceStyleBold.copyWith(color: lightIconColor)),
         Expanded(child: MoveWindow()),
       ],
@@ -116,9 +124,12 @@ class LeftSideHome extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final searchTextFieldController = useTextEditingController();
+    final width = screenWidth(context);
+    final iconSize = 20.0;
     return Row(
       children: [
         SvgPicture.asset(AppSvgPath),
+        if (width > 1440) horizontalSpaceLarge,
         horizontalSpaceLarge,
         Row(
           children: [
@@ -126,7 +137,7 @@ class LeftSideHome extends HookWidget {
               onPressed: () {},
               icon: Icon(
                 Icons.arrow_back_sharp,
-                size: 20.w,
+                size: iconSize,
                 color: lightIconColor,
               ),
             ),
@@ -135,16 +146,22 @@ class LeftSideHome extends HookWidget {
               onPressed: () {},
               icon: Icon(
                 Icons.arrow_forward_sharp,
-                size: 20.w,
+                size: iconSize,
                 color: lightIconColor,
               ),
             ),
             horizontalSpaceSmall,
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                /*showDialog(
+                          context: context,
+                          builder: (context) {
+                            return PreferenceView();
+                          });*/
+              },
               icon: Icon(
                 Icons.watch_later_outlined,
-                size: 20.w,
+                size: iconSize,
                 color: lightIconColor,
               ),
             ),
@@ -154,48 +171,69 @@ class LeftSideHome extends HookWidget {
         SizedBox(
           width: 500.w,
           height: 30.w,
-          child: TextField(
-            controller: searchTextFieldController,
-            style: TextStyle(color: lightIconColor),
-            decoration: InputDecoration(
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 5.h, horizontal: 20.w),
-              hintText: "Search here",
-              hintStyle: TextStyle(color: lightIconColor),
-              filled: true,
-              fillColor: bodyColor,
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: authBtnColor, width: 2.0),
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-              border: OutlineInputBorder(
-                borderSide: const BorderSide(color: authBtnColor, width: 2.0),
-                borderRadius: BorderRadius.circular(20.0),
+          child: GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => SearchModalView(),
+              );
+            },
+            child: TextField(
+              enabled: false,
+              controller: searchTextFieldController,
+              style: TextStyle(color: lightIconColor),
+              decoration: InputDecoration(
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 5.h, horizontal: 20.w),
+                hintText: 'Search here',
+                hintStyle: TextStyle(color: lightIconColor),
+                filled: true,
+                fillColor: bodyColor,
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: authBtnColor, width: 2.0),
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: const BorderSide(color: authBtnColor, width: 2.0),
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
               ),
             ),
           ),
         ),
         Expanded(child: MoveWindow()),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: GestureDetector(
+            onTap: () {
+              showDialog(
+                  context: context,
+                  builder: (context) => StatusDialogMinView());
+            },
+            // child: Text(
+            //   // statusTag,
+            //   ''
+            // )
+            child: Icon(
+              Icons.star_rate,
+              size: 20,
+              color: kcStatusIcon,
+            ),
+          ),
+        ),
+        horizontalSpaceVeryTiny,
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Container(
-              height: 28.w,
-              width: 28.w,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.grey,
-              ),
-              child: ClipRRect(),
-            ),
+            ProfileDropdownView(),
             Positioned(
-              top: 16,
-              left: 20,
+              top: 23,
+              left: 26,
               child: Container(
-                height: 14.w,
-                width: 14.w,
+                height: 14,
+                width: 14,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: BorderRadius.circular(30),
                   color: Colors.green,
                 ),
               ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_app_colors.dart';
-
+import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/emoji_builder.dart';
+import 'package:zc_desktop_flutter/ui/shared/smart_widgets/emoji_selector/emoji.dart';
 import 'formatter.dart';
 import 'message_action.dart';
 
@@ -9,8 +10,10 @@ class SendMessageInputField extends StatefulWidget {
   const SendMessageInputField({
     Key? key,
     required this.sendMessage,
+    required this.placeHolder,
   }) : super(key: key);
   final Function(String message) sendMessage;
+  final String placeHolder;
 
   @override
   State<SendMessageInputField> createState() => _SendMessageInputFieldState();
@@ -56,42 +59,54 @@ class _SendMessageInputFieldState extends State<SendMessageInputField> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12),
-      width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: hasFocus ? Colors.black : leftNavBarColor),
+        color: kcBackgroundColor1,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildMessageTextField(
-            placeholder: '#designers',
-          ),
-          _SendMessageFunctions(
-            isActive: hasFocus,
-            isTyping: isTyping,
-            shortcutPressed: () {
-              keepFocusActive();
-            },
-            formatPressed: () {
-              keepFocusActive();
-            },
-            tagPressed: () {
-              keepFocusActive();
-            },
-            attachPressed: () {
-              keepFocusActive();
-            },
-            sendPressed: () {
-              keepFocusActive();
-              widget.sendMessage(_messageController.text);
-            },
-            schedulePressed: () {
-              keepFocusActive();
-            },
-          ),
-        ],
+      child: Container(
+        margin: EdgeInsets.only(
+          left: 12,
+          right: 12,
+          bottom: 10,
+          top: 6,
+        ),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(color: hasFocus ? Colors.black : leftNavBarColor),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildMessageTextField(
+              placeholder: widget.placeHolder,
+            ),
+            _SendMessageFunctions(
+              isActive: hasFocus,
+              isTyping: isTyping,
+              messageController: _messageController,
+              shortcutPressed: () {
+                keepFocusActive();
+              },
+              formatPressed: () {
+                keepFocusActive();
+              },
+              tagPressed: () {
+                keepFocusActive();
+              },
+              attachPressed: () {
+                keepFocusActive();
+              },
+              sendPressed: () {
+                keepFocusActive();
+                widget.sendMessage(_messageController.text);
+              },
+              schedulePressed: () {
+                keepFocusActive();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -105,7 +120,7 @@ class _SendMessageInputFieldState extends State<SendMessageInputField> {
       decoration: InputDecoration(
         border: UnderlineInputBorder(borderSide: BorderSide.none),
         contentPadding: EdgeInsets.all(5),
-        hintText: 'Send a message_page to $placeholder',
+        hintText: 'Send a message to $placeholder',
         hintStyle: TextStyle(
           fontSize: 15,
           color: leftNavBarColor,
@@ -117,17 +132,19 @@ class _SendMessageInputFieldState extends State<SendMessageInputField> {
 }
 
 class _SendMessageFunctions extends StatelessWidget {
-  const _SendMessageFunctions({
-    Key? key,
-    required this.isActive,
-    required this.isTyping,
-    required this.sendPressed,
-    this.shortcutPressed,
-    this.tagPressed,
-    this.attachPressed,
-    this.schedulePressed,
-    this.formatPressed,
-  }) : super(key: key);
+  const _SendMessageFunctions(
+      {Key? key,
+      required this.isActive,
+      required this.isTyping,
+      required this.sendPressed,
+      required this.messageController,
+      this.shortcutPressed,
+      this.tagPressed,
+      this.attachPressed,
+      this.schedulePressed,
+      this.formatPressed,
+      this.emojiPressed})
+      : super(key: key);
   final bool isActive;
   final bool isTyping;
   final Function() sendPressed;
@@ -136,6 +153,8 @@ class _SendMessageFunctions extends StatelessWidget {
   final Function()? attachPressed;
   final Function()? schedulePressed;
   final Function()? formatPressed;
+  final Function()? emojiPressed;
+  final TextEditingController? messageController;
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +201,11 @@ class _SendMessageFunctions extends StatelessWidget {
               MessageAction(
                 onTap: tagPressed!,
                 icon: 'assets/icons/at.svg',
+              ),
+              EmojiBuilder(
+                icon: 'assets/icons/emoji_icon.svg',
+                width: 20,
+                onEmojiSelected: _onEmojiSelected,
               ),
               MessageAction(
                 onTap: attachPressed!,
@@ -233,5 +257,12 @@ class _SendMessageFunctions extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  _onEmojiSelected(Emoji emoji) {
+    messageController!
+      ..text += emoji.emoji
+      ..selection = TextSelection.fromPosition(
+          TextPosition(offset: messageController!.text.length));
   }
 }

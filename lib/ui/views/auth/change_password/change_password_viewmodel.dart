@@ -2,38 +2,22 @@ import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:zc_desktop_flutter/app/app.locator.dart';
 import 'package:zc_desktop_flutter/app/app.router.dart';
+import 'package:zc_desktop_flutter/constants/app_strings.dart';
 import 'package:zc_desktop_flutter/core/validator/validator.dart';
 import 'package:zc_desktop_flutter/services/auth_service.dart';
+import 'package:zc_desktop_flutter/services/window_title_bar_service.dart';
+import 'package:zc_desktop_flutter/ui/views/auth/change_password/change_password_view.dart';
 
-class ChangePasswordViewModel extends BaseViewModel with Validator{
+import 'change_password_view.form.dart';
+
+class ChangePasswordViewModel extends FormViewModel with Validator {
   final _navigationService = locator<NavigationService>();
+  final _authService = locator<AuthService>();
   bool _isNotPasswordVisible = true;
-  String? _confirmErrorMsg, _passwordMsg; 
-  String _password = '';
+  String? _confirmErrorMsg, _passwordMsg;
   bool _isError = false;
   bool _isBusy = false;
   bool _isShowDialog = false;
-  String _errorMsg = '';
-  String _confirmPassword = '';
-  String _errorImage = 'assets/images/failed.svg';
-  String _successImage = 'assets/images/success.svg';
-  String _errorTitle = 'Password Reset failed';
-  String _errorSubtitle = 'Your password reset failed! Give it another shot!';
-  String _successTitle = 'Password Reset successful';
-  String _successSubtitle = 'Your password reset was successful! You can now proceed to Login!';
-
-
-  get errorImage => _errorImage;
-  get errorTitle => _errorTitle;
-  get errorSubtiltle => _errorSubtitle;
-  get successImage => _successImage;
-  get successTitle => _successTitle;
-  get successSubtitle => _successSubtitle;
-  get errorMessage => _errorMsg;
-
-  final _logoUrl = 'assets/images/zc_logo.svg';
-
-  get logoUrl => _logoUrl;
   get isPasswordVisible => _isNotPasswordVisible;
   get confirmErrorMsg => _confirmErrorMsg;
   get passwordMsg => _passwordMsg;
@@ -41,78 +25,81 @@ class ChangePasswordViewModel extends BaseViewModel with Validator{
   get isShowDialog => _isShowDialog;
   get isBusy => _isBusy;
 
-  final _authService = locator<AuthService>();
+  final _windowsTitleBarService = locator<WindowTitleBarService>();
 
+  /// This method sets the [title] of the [ChangePasswordView] on the title  bar
+  /// it is called immediately the view comes up
+  void init() async {
+    await Future.delayed(Duration(milliseconds: 1));
+    _windowsTitleBarService.setTitle('Zuri | Change Password');
+  }
+
+  /// sets the error state of the view
   _setIsError() {
     _isError = !_isError;
     notifyListeners();
   }
 
-  _setIsBusy(){
+  /// set the busy state of the view
+  _setIsBusy() {
     _isBusy = !_isBusy;
     notifyListeners();
   }
 
-  _setIsShowDialog(bool value) {
+  /// this method sets dialog  to view
+  _setIsShowDialog(bool value) async {
     _isShowDialog = value;
     notifyListeners();
   }
 
+  /// this method sets the password field visibility
   setIsPasswordVisible() {
     _isNotPasswordVisible = !_isNotPasswordVisible;
     notifyListeners();
   }
 
-  setPassword(value) {
-    _password = value;
-    notifyListeners();
-  }
-  setConfirmPassword(value) {
-    _confirmPassword = value;
-    notifyListeners();
-  }
-
-
+  /// this method enables you to change your password if all criteria are met
+  /// criteria include password must be same with confirm password, password must not be less
+  /// than 8 characters and must include special characters
+  /// then takes you back to login view
   Future<void> changePassword() async {
     _setIsShowDialog(false);
-    bool passwordCheck = passwordValidator(_password);
+    bool passwordCheck = passwordValidator(passwordValue!);
     bool confirmPasswordCheck =
-        confirmPasswordValidator(_password, _confirmPassword);
-    if(!passwordCheck || !confirmPasswordCheck) {
-      if(!passwordCheck) {
-        _passwordMsg = 
-        '''Invalid Password. Password should consist of atleast:
-                       One Uppercase 
-                       One Lowercase
-                       One Character
-                       And must be at least 8 characters long ''';
-      }else {
+        confirmPasswordValidator(passwordValue!, confirmPasswordValue!);
+    if (!passwordCheck || !confirmPasswordCheck) {
+      if (!passwordCheck) {
+        _passwordMsg = ChangePasswordErrorMessage;
+      } else {
         _passwordMsg = null;
       }
 
-      if(!confirmPasswordCheck) {
-        _confirmErrorMsg = 'Password does not match';
+      if (!confirmPasswordCheck) {
+        _confirmErrorMsg = ConfirmPasswordErrorMessage;
       } else {
         _confirmErrorMsg = null;
       }
       notifyListeners();
       return;
     }
-    try{
+    try {
       _setIsBusy();
-      await _authService.updatePassword(_password);
+      await _authService.updateUserPassword(passwordValue!);
       _setIsBusy();
-      _setIsShowDialog(true);
     } catch (e) {
-      _errorMsg = 'Something went wrong';
       _setIsBusy();
       _setIsError();
-      _setIsShowDialog(true);
     }
-    notifyListeners();
+    _setIsShowDialog(true);
   }
 
-  gotoLogin(){
+  /// this method navigates to the login view
+  gotoLogin() {
     _navigationService.navigateTo(Routes.loginView);
   }
+
+  /// This method is meant to  be override while using the FormViewModel but since there's
+  /// absolutely no need for the method inside this view model so it remain an empty method
+  @override
+  void setFormStatus() {}
 }

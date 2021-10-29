@@ -7,6 +7,9 @@ const Color kcAccentColor = Color(0xffB8003C);
 const Color kcErrorColor = Color(0xffF40101);
 const Color kcSuccessColor = Color(0xff008B5E);
 const Color kcPrimaryLight = Color(0xffE1FDF4);
+const Color KaddPeopleBackcolor = Color(0xFFBCF9E6);
+const Color purple = Colors.purple;
+const Color kcStatusIcon = Colors.yellow;
 
 //Create and display Channel Color
 const Color kcCreateChannelColor = Color.fromRGBO(0, 184, 124, 0.48);
@@ -15,6 +18,7 @@ const Color kcDisplayChannelColor2 = Color.fromRGBO(153, 153, 153, 0.4);
 const Color kcDisplayChannelColor3 = Color.fromRGBO(153, 153, 153, 0.1);
 const Color kcDisplayChannelColor4 = Color.fromRGBO(153, 153, 153, 1);
 const Color kcCreateChannelHoverColor = Color.fromRGBO(225, 253, 244, 1);
+const Color kcCreateChannelHoverColor1 = Color.fromRGBO(188, 249, 230, 1);
 const Color kcBorderColor = Color.fromRGBO(231, 231, 231, 1);
 const Color kcViewColor = Color.fromRGBO(196, 196, 196, 0.1);
 const Color createChannelHeaderColor = Color(0xFF1D1C1D);
@@ -37,6 +41,8 @@ const Color reactionBackground = Color(0xFFE1E8ED);
 const Color whiteColor = Color(0xFFFFFFFF);
 const Color searchBarColor = Color(0xFF1B1818);
 const Color emojiBackground = Color(0xFFBBDDF5);
+const Color ZuriWorkspaceTextColor = Color(0xFF292929);
+const Color createAccountColor = Color(0xFF333333);
 
 // Avatar Colors
 const Color avatarColor1 = Color(0xffF7E0FF);
@@ -51,3 +57,13 @@ const Color preferenceBorderblack = Color(0xFF323232);
 
 //status colors
 const Color clearStatusBtnBorderColor = Color(0xffa1a1a1);
+
+//Border colors
+const Color boxBorderColor = Color(0xFFE5E5E5);
+const List<Color> emojiHoverRandomColor = [
+  kcAccentColor,
+  kcPrimaryColor,
+  kcSecondaryColor,
+  kcCreateChannelColor,
+  purple
+];

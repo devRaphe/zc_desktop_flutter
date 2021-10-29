@@ -7,11 +7,18 @@ class WindowTitleBarModel extends BaseViewModel {
 
   WindowTitleBarModel() {
     _windowTitleBarService.addListener(() {
-      _isHomeView = _windowTitleBarService.isHome;
+      _isHomeView = _windowTitleBarService.IsHome;
+      _title = _windowTitleBarService.Title;
       notifyListeners();
     });
   }
 
   bool _isHomeView = false;
+  String _title = 'Zuri | Sign In';
+
   bool get isHomeView => _isHomeView;
+  String get title => _title;
+
+  String _statusTag = '';
+  String get statusTag => _statusTag;
 }

@@ -11,7 +11,10 @@ import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/detailed_screen_custom
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/workspace_members_widget.dart';
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/workspace_title.dart';
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/zc_desk_send_message_field.dart';
+
+import 'package:zc_desktop_flutter/ui/views/main/add_user_channel/add_user_view.dart';
 import 'package:zc_desktop_flutter/ui/views/main/channels/channels_viewmodel.dart';
+import 'package:zc_desktop_flutter/ui/views/main/channels_details/channels_details_view.dart';
 import 'package:zc_desktop_flutter/ui/views/main/dm/dm_view.dart';
 
 class ChannelsView extends StatelessWidget {
@@ -39,9 +42,76 @@ class ChannelsView extends StatelessWidget {
                   DetailedCustomAppBar(
                     margin: EdgeInsets.only(left: 2.0.w),
                     leading: WorkSpaceTitle(
-                      channelTitle: model.currentChannel!.name,
+                      channelTitle: model.currentChannel.name,
                     ),
-                    trailing: WorkSpaceMembers(),
+                    trailing: InkWell(
+                        onTap: () => showDialog(
+                            context: context,
+                            builder: (context) => ChannelsDetailsView()),
+                        child: WorkSpaceMembers()),
+                  ),
+                  // Align(alignment: Alignment.topCenter, child: TopRowActions()),
+                  Container(
+                    height: 110.h,
+                    decoration: BoxDecoration(
+                      color: whiteColor,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0, left: 38.0),
+                      child: Column(
+                        children: <Widget>[
+                          verticalSpaceTiny,
+                          Row(
+                            children: [
+                              Text(
+                                'This is the very beginning of the ',
+                                style: messageTimeStyleNormal,
+                              ),
+                              Text(
+                                '${model.currentChannel.name}',
+                                style: messageTimeStyleNormal,
+                              ),
+                              Text(
+                                ' channel',
+                                style: messageTimeStyleNormal,
+                              ),
+                            ],
+                          ),
+                          verticalSpaceTinyTwo,
+                          Row(
+                            children: [
+                              Text(
+                                '${model.currentChannel.name}',
+                                style: messageTimeStyleNormal,
+                              ),
+                              Text(
+                                ' created this channel on Aug 30th.',
+                                style: messageTimeStyleNormal,
+                              ),
+                            ],
+                          ),
+                          verticalSpaceSmallOne,
+                          Row(
+                            children: <Widget>[
+                              InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AddUserView(),
+                                  );
+                                },
+                                child: SvgPicture.asset(
+                                    'assets/icons/add_member.svg'),
+                              ),
+                              Text(
+                                ' Add members',
+                                style: messageTimeStyleNormal,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   Flexible(
                       fit: FlexFit.tight,
@@ -107,6 +177,7 @@ class ChannelsView extends StatelessWidget {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: SendMessageInputField(
+                      placeHolder: '',
                       sendMessage: (message) {
                         if (message.isNotEmpty) {
                           model.sendMessage(message);
@@ -114,6 +185,7 @@ class ChannelsView extends StatelessWidget {
                       },
                     ),
                   ),
+                  verticalSpaceRegular,
                 ],
               ),
             ),
@@ -124,9 +196,7 @@ class ChannelsView extends StatelessWidget {
 
 Widget messageReplies(ChannelsViewModel model) {
   return InkWell(
-    onTap: () {
-      print("Threads opened");
-    },
+    onTap: () {},
     child: Container(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -156,9 +226,7 @@ Widget constructRepliesHighLightAvatars({
   int? numberOfReplies,
 }) {
   return InkWell(
-    onTap: () {
-      print("Threads opened");
-    },
+    onTap: () {},
     child: Container(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -277,6 +345,57 @@ class MessageTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class TopRowActions extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: kcPrimaryLight,
+      child: Row(
+        children: [
+          TopRowItem(
+            label: 'Pinned',
+            icon: SVGAssetPaths.pinnedIcon,
+          ),
+          TopRowItem(
+            label: 'Add to bookmarks',
+            icon: SVGAssetPaths.addIcon,
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class TopRowItem extends StatelessWidget {
+  final String icon;
+  final String label;
+
+  TopRowItem({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            icon,
+            color: bodyColor,
+          ),
+          SizedBox(
+            width: 5.h,
+          ),
+          Text(
+            label,
+            style: boldCaptionStyle,
+          )
+        ],
       ),
     );
   }

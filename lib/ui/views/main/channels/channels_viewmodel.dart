@@ -1,18 +1,35 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
-import 'package:zc_desktop_flutter/model/app_models.dart' as LoggedInUser;
-
 import 'package:stacked/stacked.dart';
 import 'package:zc_desktop_flutter/app/app.locator.dart';
 import 'package:zc_desktop_flutter/app/app.logger.dart';
+import 'package:zc_desktop_flutter/model/app_models.dart' as LoggedInUser;
 import 'package:zc_desktop_flutter/model/app_models.dart';
+import 'package:zc_desktop_flutter/services/auth_service.dart';
 import 'package:zc_desktop_flutter/services/centrifuge_service.dart';
 import 'package:zc_desktop_flutter/services/channels_service.dart';
+import 'package:zc_desktop_flutter/services/local_storage_service.dart';
 
 class ChannelsViewModel extends BaseViewModel {
-  final log = getLogger("MessageViewModel");
+  final log = getLogger('MessageViewModel');
   final _channelService = locator<ChannelsService>();
   final _centrifugeService = locator<CentrifugeService>();
+
+  Users _user = Users(name: '');
+  String? _roomId = '';
+  Channel? _channelInfo;
+
+    //Declare the services that are dependent upon
+  final _localStorageService = locator<LocalStorageService>();
+
+  /// This gets the currently logged in user respose
+  Auth get _auth {
+    final auth = _localStorageService.getFromDisk(localAuthResponseKey);
+    return Auth.fromJson(jsonDecode(auth as String));
+  }
+
 
   late LoggedInUser.User _currentLoggedInUser;
   int currentSelectedChannel = 0;
@@ -20,11 +37,13 @@ class ChannelsViewModel extends BaseViewModel {
   String? _orgId = '0';
   String? channelId = '0';
   List<ChannelMessage> _messages = [];
-  List<ChannelMessage> get messages => _messages;
-  Channel? _currentChannel;
 
-  Channel? get currentChannel => _currentChannel;
+  List<ChannelMessage> get messages => _messages;
+  Channel _currentChannel = Channel();
+
+  Channel get currentChannel => _currentChannel;
   bool _onMessageTileHover = false;
+
   bool get onMessageTileHover => _onMessageTileHover;
   bool _onHoverActionsHovered = false;
 
@@ -47,6 +66,11 @@ class ChannelsViewModel extends BaseViewModel {
   bool get onHoverActionsHover => _onHoverActionsHovered;
   int _onMessageHoveredIndex = 0;
 
+  
+  String userName() {
+    return _auth.user!.displayName;
+  }
+
   int get onMessageHoveredIndex => _onMessageHoveredIndex;
   void onMessageHovered(bool hover, int index) {
     _onMessageTileHover = hover;
@@ -66,37 +90,77 @@ class ChannelsViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void setup() {
-    runTask();
+  void setup() async {
+    await runTask();
   }
 
-  void runTask() async {
+  Future<void> runTask() async {
     _currentChannel = _channelService.getChannel();
     _currentLoggedInUser = _channelService.getCurrentLoggedInUser()!;
-    _channelService.addUserChannel(
-        _currentLoggedInUser.id, '1', true, 'prop1', 'prop2', 'prop3');
-    _messages = await _channelService.fetchChannelMessages('', '');
-    channelId = _channelService.getChannel().id;
-    notifyListeners();
-    getChannelSocketId();
+    //_channelService.addUserToChannel(id: _currentLoggedInUser.id,role_id: '1',is_admin: true,prop1: 'prop1',prop2: 'prop2',prop3: 'prop3');
+    //_messages = await _channelService.fetchChannelMessages();
+    //getChannelSocketId();
+    //listenToNewMessages();
+  }
 
+    void runTasks() async {
+    setBusy(true);
+    _currentChannel = _channelService.getChannel();
+    _user = await _channelService.getUser();
+    _currentLoggedInUser = _channelService.getCurrentLoggedInUser()!;
+    _channelInfo = _channelService.getChannel();
+    // if (_channelInfo == null) {
+    //   //we dont have a conversation yet so create a new room
+    //   await _channelService.createChannels();
+
+    //   ///_dmService.getRoomInfo(_roomId);
+    // } else {
+    //   _roomId = _channelInfo!.id;
+    // }
+    _roomId = _channelInfo!.id;
+    _messages = (await _channelService.fetchChannelMessages(_roomId));
+    //_dmService.markMessageAsRead('614b1e8f44a9bd81cedc0a29');
+    setBusy(false);
+    log.i(_user.name);
+    notifyListeners();
+
+    websocketConnect();
     listenToNewMessages();
   }
 
-  void getChannelSocketId() async {
-    String channelSockId = await _channelService.getChannelSocketId();
+  Users get user => _user;
+  String get roomId => _roomId!;
+  Channel get channelInfo => _channelInfo!;
+  LoggedInUser.User get currentLoggedInUser => _currentLoggedInUser;
 
-    websocketConnect(channelSockId);
+  // void getChannelSocketId() async {
+  //   String channelSockId = await _channelService.fetchChannelSocketId();
+
+  //   websocketConnect(channelSockId);
+  // }
+
+    void getChannelSocketId() async {
+    // String channelSockId = await _channelService.fetchChannelSocketId();
+
+    websocketConnect();
   }
 
-  void websocketConnect(String socketId) async {
-    await _centrifugeService.connect();
-    await _centrifugeService.subscribe(socketId);
+  // void websocketConnect(String socketId) async {
+  //   await _centrifugeService.connect();
+  //   await _centrifugeService.subscribe(socketId);
+  // }
+
+    void websocketConnect() async {
+      String channelSockId = await _channelService.fetchChannelSocketId();
+      
+      await _centrifugeService.subscribe(channelSockId);
   }
 
   void listenToNewMessages() {
+     _channelInfo = _channelService.getChannel();
+    _roomId = _channelInfo!.id;
     _centrifugeService.messageStreamController.stream.listen((event) async {
-      _messages = await _channelService.fetchChannelMessages('', '');
+      _messages = await _channelService.fetchChannelMessages(_roomId);
       notifyListeners();
     });
   }
@@ -124,17 +188,16 @@ class ChannelsViewModel extends BaseViewModel {
 
   String formatDate(String createdAt) {
     final dateToCheck = DateTime.parse(createdAt);
-    print(dateToCheck);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = DateTime(now.year, now.month, now.day - 1);
-    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    //final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final aDate = DateTime(
         int.parse(DateFormat('yyyy').format(dateToCheck)),
         int.parse(DateFormat('MM').format(dateToCheck)),
         int.parse(DateFormat('dd').format(dateToCheck)));
-    print(DateFormat('dd').format(dateToCheck));
-    print(aDate);
+    //print(DateFormat('dd').format(dateToCheck));
+    //print(aDate);
     if (aDate == today) {
       return 'Today ' +
           today.day.toString() +
@@ -169,8 +232,12 @@ class ChannelsViewModel extends BaseViewModel {
     _messages.add(mess);
     notifyListeners();
     //u can get index by getting list length and minus 1
+    // ignore: unused_local_variable
     var res = await _channelService.sendMessage(
-        _channelId, _currentLoggedInUser.id, message, _orgId);
+        channel_id: _channelId,
+        senderId: _currentLoggedInUser.id,
+        message: message,
+        org_id: _orgId);
     /* var index = _messages.indexWhere((Results) {
       return Results.message == res.data.message;
     });
@@ -188,22 +255,21 @@ class ChannelsViewModel extends BaseViewModel {
   }
 
   LoggedInUser.User getUser(var senderId) {
-    print("player " + senderId);
     if (_currentLoggedInUser.id == senderId) {
       return _currentLoggedInUser;
     } else {
       return LoggedInUser.User(
           id: senderId,
-          firstName: 'Zuri Partner',
-          lastName: 'Zuri Partner',
-          displayName: 'Zuri Partner',
-          email: 'email',
-          phone: 'phone',
+          firstName: _auth.user!.firstName,
+          lastName: _auth.user!.lastName,
+          displayName: _auth.user!.displayName,
+          email: _auth.user!.displayName,
+          phone: _auth.user!.phone,
           status: 1,
           timeZone: 'timeZone',
           createdAt: 'createdAt',
           updatedAt: 'updatedAt',
-          token: 'token'); //check this functionality
+          token: _auth.user!.token); //check this functionality
     }
   }
 }

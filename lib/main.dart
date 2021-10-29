@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:stacked_services/stacked_services.dart';
@@ -16,8 +17,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await setupLocator();
-
   await ThemeManager.initialise();
+
   runApp(ZcDesktop());
 
   await setUpWindow();
@@ -54,12 +55,11 @@ class ZcDesktop extends StatelessWidget {
             theme: regularTheme,
             darkTheme: darkTheme,
             themeMode: themeMode,
-            initialRoute: Routes.startUpView,
             navigatorKey: StackedService.navigatorKey,
             onGenerateRoute: StackedRouter().onGenerateRoute,
             supportedLocales: L10n.all,
             localizationsDelegates: [
-              // AppLocalizations.delegate,
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate

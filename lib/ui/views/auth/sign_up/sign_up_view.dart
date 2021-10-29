@@ -3,30 +3,36 @@ import 'package:flutter/painting.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:stacked/stacked.dart';
+import 'package:stacked/stacked_annotations.dart';
+import 'package:zc_desktop_flutter/constants/app_asset_paths.dart';
 import 'package:zc_desktop_flutter/constants/app_strings.dart';
-import 'package:zc_desktop_flutter/constants/asset_paths.dart';
 import 'package:zc_desktop_flutter/core/network/failure.dart';
 import 'package:zc_desktop_flutter/core/validator/validation_extension.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_app_colors.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_text_styles.dart';
 import 'package:zc_desktop_flutter/ui/shared/const_ui_helpers.dart';
-import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/auth_icons.dart';
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/left_side_container.dart';
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/zcdesk_auth_btn.dart';
 import 'package:zc_desktop_flutter/ui/shared/dumb_widgets/zcdesk_input_field.dart';
-
+import 'sign_up_view.form.dart';
 import 'sign_up_viewmodel.dart';
 
-class SignUpView extends HookWidget {
+@FormView(fields: [
+  FormTextField(name: 'email'),
+  FormTextField(name: 'password'),
+  FormTextField(name: 'confirmPassword'),
+  FormTextField(name: 'fullName')
+])
+class SignUpView extends HookWidget with $SignUpView {
   final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
-    final emailController = useTextEditingController();
-    final passwordController = useTextEditingController();
-    final confirmPasswordController = useTextEditingController();
-
     return ViewModelBuilder<SignUpViewModel>.reactive(
+      onModelReady: (model) {
+        listenToFormUpdated(model);
+        model.init();
+      },
       builder: (context, model, child) => Scaffold(
         body: Container(
           child: Column(
@@ -54,18 +60,27 @@ class SignUpView extends HookWidget {
                                   CreateAccountText,
                                   style: headline3,
                                 ),
-                                if (model.hasError)
+                                if (model.hasError) ...[
+                                  verticalSpaceMedium,
                                   Text(
                                     (model.modelError as Failure).message,
-                                    style:
-                                        headline6.copyWith(color: Colors.red),
+                                    style: boldCaptionStyle.copyWith(
+                                        color: Colors.red),
                                   ),
+                                ],
                                 verticalSpaceMedium,
                                 Form(
                                   key: _formKey,
                                   child: Column(
                                     children: [
-                                      AuthInputField(
+                                      ZuriDeskInputField(
+                                        label: 'Full Name',
+                                        controller: fullNameController,
+                                        hintPlaceHolder: FullNameHintText,
+                                        validator: context.validatePassword,
+                                      ),
+                                      verticalSpaceMedium,
+                                      ZuriDeskInputField(
                                         label: 'Email',
                                         controller: emailController,
                                         keyboardType:
@@ -74,7 +89,7 @@ class SignUpView extends HookWidget {
                                         validator: context.validateEmail,
                                       ),
                                       verticalSpaceMedium,
-                                      AuthInputField(
+                                      ZuriDeskInputField(
                                         label: 'Password',
                                         password: true,
                                         isVisible: model.passwordVisibility,
@@ -85,7 +100,7 @@ class SignUpView extends HookWidget {
                                         validator: context.validatePassword,
                                       ),
                                       verticalSpaceMedium,
-                                      AuthInputField(
+                                      ZuriDeskInputField(
                                         label: 'Confirm Password',
                                         password: true,
                                         isVisible:
@@ -126,27 +141,24 @@ class SignUpView extends HookWidget {
                                   onTap: () async {
                                     if (!_formKey.currentState!.validate())
                                       return;
-                                    await model.signUp(
-                                      email: emailController.text,
-                                      password: passwordController.text,
-                                    );
+                                    await model.signUp();
                                   },
                                   isBusy: model.isBusy,
                                 ),
                                 verticalSpaceMedium,
-                                Center(
-                                  child: Text(
-                                    'Easy Sign in With',
-                                    style: bodyText1.copyWith(fontSize: 16.sp),
-                                  ),
-                                ),
-                                verticalSpaceMedium,
-                                AuthIcons(
-                                  googleOnPressed: () {},
-                                  facebookOnPressed: () {},
-                                  twitterOnPressed: () {},
-                                ),
-                                verticalSpaceMedium,
+                                // Center(
+                                //   child: Text(
+                                //     'Easy Sign in With',
+                                //     style: bodyText1.copyWith(fontSize: 16.sp),
+                                //   ),
+                                // ),
+                                // verticalSpaceMedium,
+                                // AuthIcons(
+                                //   googleOnPressed: () {},
+                                //   facebookOnPressed: () {},
+                                //   twitterOnPressed: () {},
+                                // ),
+                                // verticalSpaceMedium,
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
